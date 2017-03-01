@@ -6,7 +6,6 @@ using namespace std;
 typedef PriorityQueue::DataType DataType;
 
 PriorityQueue::PriorityQueue(unsigned int capacity){
-
 	heap_= new DataType [capacity + 1];
 	size_ = 0;
 	capacity_ = capacity;
@@ -14,32 +13,28 @@ PriorityQueue::PriorityQueue(unsigned int capacity){
 
 
 PriorityQueue::~PriorityQueue(){
-	
 	delete heap_;
 }
   
 // Returns the number of elements in the priority queue.
 unsigned int PriorityQueue::size() const{
-
-return size_;
+	return size_;
 }
 // Returns true if the priority queue is empty, and false otherwise.
 bool PriorityQueue::empty() const{
-
-return size_==0;
+	return size_==0;
 }
 // Returns true if the priority queue is full, and false otherwise.
 bool PriorityQueue::full() const{
-
-return size_ == capacity_;
+	return size_ == capacity_;
 }
 // Prints the contents of the priority queue.
 void PriorityQueue::print() const{
 	cout<<"zero ";
 	for(int i = 1; i <= size_; i++){
-		cout<< heap_[i]<<" ";
+		cout<<heap_[i]<<" ";
 	}
-	cout<< endl;
+	cout<<endl;
 }
 // Returns the max element of the priority queue, but does not remove it.
 DataType PriorityQueue::max() const{
@@ -50,7 +45,6 @@ DataType PriorityQueue::max() const{
 // Inserts value into the priority queue. Returns true if successful, and 
 // false otherwise. Assume no duplicate entries will be entered.
 bool PriorityQueue::enqueue(DataType val){
-	
 	if(full()){
 		return false;
 	}
@@ -82,7 +76,7 @@ bool PriorityQueue::dequeue(){
 		return true;
 	}
 	
-	while ((heap_[cur]<heap_[cur*2] || heap_[cur]<heap_[cur*2+1]) && cur>=size_/2){
+	while ((heap_[cur]<heap_[cur*2] || heap_[cur]<heap_[cur*2+1]) && cur<=size_/2){
 		if (size_<3){
 			if (heap_[cur*2]>heap_[cur]){
 				DataType temp = heap_[cur];
