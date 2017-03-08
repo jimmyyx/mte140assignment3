@@ -17,13 +17,24 @@ BinarySearchTree::BinarySearchTree(){
 }
 // Destructor of the class BinarySearchTree. It deallocates the memory 
 // space allocated for the binary search tree. 
-BinarySearchTree::~BinarySearchTree(){
-	Node* cur=root;
-	while (cur->left->left){
-		cur=cur->left;
+
+void deleteTree (BinarySearchTree::Node* cur){
+	//pre, have not checked either
+	if (cur->left){
+		deleteTree (cur->left);
 	}
-	while (cur->right->right){
-		cur=cur->right;
+	//in, checked every left child
+	if (cur->right){
+		deleteTree (cur->right);
+	}
+	//post, checked every left and right child
+	delete cur;
+	cur=NULL;
+}
+
+BinarySearchTree::~BinarySearchTree(){
+	if (root_){
+		deleteTree(root_);	
 	}
 	
 }
@@ -35,20 +46,20 @@ unsigned int BinarySearchTree::size() const{
 // Returns the maximum value of a node in the tree. You can assume that 
 // this function will never be called on an empty tree.
 DataType BinarySearchTree::max() const{
-	Node* cur=root;
+	Node* cur=root_;
 	while (cur->right){
 		cur=cur->right;
 	}
-	return cur;
+	return cur->val;
 }
 // Returns the minimum value of a node in the tree. You can assume that 
 // this function will never be called on an empty tree.
 DataType BinarySearchTree::min() const{
-	Node* cur=root;
+	Node* cur=root_;
 	while (cur->left){
 		cur=cur->left;
 	}
-	return cur;
+	return cur->val;
 }
 // Returns the maximum depth of the tree. A tree with only the root node has a 
 // depth of 0. You can assume that this function will never be called on an 
@@ -72,23 +83,27 @@ int BinarySearchTree::getNodeDepth(Node* n) const{
 	return nodeDepth;
 }
 
-int recurDepth (Node* cur) const{
-	if (cur->left){
-		recurDepth (cur->left);
-	}
-	if (cur->right){
-		recurDepth (cur->right);
-	}
-	return getNodeDepth(cur);
-}
+//int recurDepth (BinarySearchTree::Node* cur) {
+//	if (cur->left){
+//		recurDepth (cur->left);
+//	}
+//	if (cur->right){
+//		recurDepth (cur->right);
+//	}
+//	return BinarySearchTree::getNodeDepth(cur);
+//}
 
 unsigned int BinarySearchTree::depth() const{
-	return recurDepth(root_);
+	Node* cur = root_;
+	int maxDepth=0;
+	
+	
+	//return recurDepth(root_);
 }
 // You can print the tree in whatever order you prefer. However, methods such 
 // as in-order or level-order traversal could be the most useful for debugging.
 
-void recurPrint(Node* cur) const{
+void recurPrint(BinarySearchTree::Node* cur) {
 	//pre, have not checked either
 	if (cur->left){
 		recurPrint (cur->left);
@@ -113,10 +128,10 @@ bool BinarySearchTree::exists(DataType val) const{
 		if (!cur->left&&!cur->right){
 			return false;
 		}
-		if (cur->left&&cur->val>n->val){
+		if (cur->left&&cur->val>val){
 			//left
 			cur=cur->left;
-		}else if (cur->right&&cur->val<n->val){
+		}else if (cur->right&&cur->val<val){
 			//right
 			cur=cur->right;
 		}
@@ -124,27 +139,32 @@ bool BinarySearchTree::exists(DataType val) const{
 	return true;
 }
 // Returns a pointer to the root node
-Node* BinarySearchTree::getRootNode(){
+BinarySearchTree::Node* BinarySearchTree::getRootNode(){
 	return root_;
 }
 // Returns the root node pointer address
-Node** BinarySearchTree::getRootNodeAddress(){
+BinarySearchTree::Node** BinarySearchTree::getRootNodeAddress(){
 	return &root_;
 }
 
 // Inserts the value val into the tree. Returns false if val already exists in 
 // the tree, and true otherwise.
 bool BinarySearchTree::insert(DataType val){
-	Node* cur = root_;
 	Node* newNode=new Node(val);
+	if (!root_){
+		root_=newNode;
+		size_++;
+		return true;
+	}
+	Node* cur = root_;
 	while (cur->left||cur->right){
-		if (cur->left==val || cur->right==val){
+		if (cur->left->val==val || cur->right->val==val){
 			return false;
 		}
-		if (cur->left&&cur->val>n->val){
+		if (cur->left&&cur->val>val){
 			//left
 			cur=cur->left;
-		}else if (cur->right&&cur->val<n->val){
+		}else if (cur->right&&cur->val<val){
 			//right
 			cur=cur->right;
 		}
@@ -156,15 +176,125 @@ bool BinarySearchTree::insert(DataType val){
 	}
 	//right
 	cur->right=newNode;
+	size_++;
 	return true;
-	
+
 }
 // Removes the node with the value val from the tree. Returns true if successful, 
 // and false otherwise.
 bool BinarySearchTree::remove(DataType val){
+	if (size_==0){
+		return false;
+	}
+	if (!exists(val)){
+		return false;
+	}
 	
+	Node* cur = root_;
+	Node* removeNode;
+	if (root_->val==val){
+		//root is val
+		if (size_==1){
+			size_--;
+			delete this;
+			return true;
+		} else if (!cur->left){
+			// no left, must have a right, since size>1
+			root_=cur->right;
+			delete cur;
+			cur=NULL;
+		}else if (!(cur->left)->right){
+			//if root->left doesnt have a right
+			cur->left->right=cur->right;
+			root_=cur->left;
+			delete cur;
+			cur=NULL;
+		} else {
+			//find parent of max left
+			cur=cur->left;
+			while(cur->right->right){
+				cur=cur->right;
+			}
+			Node* deleteNode=cur->right;
+			root_->val=cur->right->val;
+			if (cur->right->left){
+				removeNode = cur->right;
+				cur->right=removeNode->left;
+				delete removeNode;
+				removeNode=NULL;
+			}
+		}
+		size_--;
+		return true;
+	}
+	
+	//find val
+	Node* pVal=root_;//parent of val
+	//removeNode is node to be removed
+	
+	val>root_->val?removeNode=root_->right:removeNode=root_->left;
+	
+	
+	while (removeNode->val!=val){
+		if(val>removeNode->val){
+			pVal=removeNode;
+			removeNode=removeNode->right;
+		}else{
+			pVal=removeNode;
+			removeNode=removeNode->left;
+		}
+	}
+	
+	bool childLeft = pVal->val>val;
+	if (childLeft){
+		if (!removeNode->left && !removeNode->right){ // no left and no right
+			pVal->left=NULL;
+		}else if (!removeNode->left){ // only right
+			pVal->left=removeNode->right;
+		}else if (!removeNode->right){ // only left
+			pVal->left=removeNode->left;
+		}else{ // both left and right
+			//find parent of max of left subtree
+			pVal=removeNode->left;
+			while(pVal->right->right){
+				pVal=pVal->right;
+			}
+			// cur is parent of max left
+			
+			removeNode->val=pVal->right->val;
+			removeNode=pVal->right;
+			if (removeNode->left){
+				pVal->right=removeNode->left;
+			}
+		}
+	}else {
+		if (!removeNode->left && !removeNode->right){ // no left and no right
+			pVal->right=NULL;
+		}else if (!removeNode->left){ // only right
+			pVal->right=removeNode->right;	
+		}else if (!removeNode->right){ // only left
+			pVal->right=removeNode->left;
+		}else{
+			//find parent of max of left subtree
+			pVal=removeNode->left;
+			while(pVal->right->right){
+				pVal=pVal->right;
+			}
+			// cur is parent of max left
+			
+			removeNode->val=pVal->right->val;
+			removeNode=pVal->right;
+			if (removeNode->left){
+				pVal->right=removeNode->left;
+			}
+		}
+	delete removeNode;
+	removeNode=NULL;
+	//if has left and right	
+	}
 }
 // Update the avlBalance starting at node n
-void BinarySearchTree::updateNodeBalance(Node* n);
+void BinarySearchTree::updateNodeBalance(Node* n){
+}
 
 
