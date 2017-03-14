@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stack>
+#include <queue>
 #include "a3_binary_search_tree.hpp"
 
 using namespace std;
@@ -23,10 +24,12 @@ void deleteTree (BinarySearchTree::Node* cur){
 	//pre, have not checked either
 	if (cur->left){
 		deleteTree (cur->left);
+		cur->left=NULL;
 	}
 	//in, checked every left child
 	if (cur->right){
 		deleteTree (cur->right);
+		cur->right=NULL;
 	}
 	//post, checked every left and right child
 	delete cur;
@@ -34,16 +37,67 @@ void deleteTree (BinarySearchTree::Node* cur){
 }
 
 BinarySearchTree::~BinarySearchTree(){
-	if (root_){
-		deleteTree(root_);	
-	}
-	root_=NULL;
+//	if (root_){
+//		deleteTree(root_);	
+//		delete root_;
+//	}
+//	root_=NULL;
 }
 
 // Returns the number of nodes in the tree. 
 unsigned int BinarySearchTree::size() const{
 	return size_;
 }
+
+//Returns a point to the parent of the maxLeft
+BinarySearchTree::Node* pMaxLeft (BinarySearchTree::Node* n, BinarySearchTree::Node* root_){
+	//never call this function on a tree with size <=1
+	if (!n->left && !n->right){
+		//return parent of n
+		BinarySearchTree::Node* cur = root_;
+		while (cur->left || cur->right){
+			if (cur->val>n->val){
+				//cur->left must exist
+				if (cur->left->val==n->val){
+					return cur;
+				}
+				cur=cur->left;
+			} else{
+				if (cur->right->val==n->val){
+					return cur;
+				}
+				cur=cur->right;
+			}
+		}
+	}
+	if (!n->left){
+		return n;
+	}
+	if (n->left->right){
+		BinarySearchTree::Node* cur = n->left;
+		while (cur->right->right){
+			cur=cur->right;
+		}
+		return cur;
+	}
+	return n;
+}
+
+//Returns a pointer to the max value in the left subtree of a given node, if parameter does not have a left child, return the right child
+BinarySearchTree::Node* maxLeft (BinarySearchTree::Node* n){
+	if (!n->left && !n->right){
+		return n;
+	}else if (n->left){
+		n = n->left;
+		while (n->right){
+			n=n->right;
+		}
+		return n;
+	}
+	return n->right;
+}
+
+
 // Returns the maximum value of a node in the tree. You can assume that 
 // this function will never be called on an empty tree.
 DataType BinarySearchTree::max() const{
@@ -85,20 +139,21 @@ int BinarySearchTree::getNodeDepth(Node* n) const{
 }
 
 unsigned int BinarySearchTree::depth() const{
-	Node* cur=root_;
-	stack<Node *> s;
+	Node* cur;
+	queue<Node *> q;
 	int maxD=0;
-	s.push(root_);
-	while (!s.empty()){
+	q.push(root_);
+
+	while (!q.empty()){
+		cur=q.front();
+		q.pop();
+		maxD=std::max(maxD,getNodeDepth(cur));
 		if (cur->left){
-			s.push(cur->left);
+			q.push(cur->left);
 		}
 		if (cur->right){
-			s.push(cur->right);
+			q.push(cur->right);
 		}
-		maxD=std::max(maxD,getNodeDepth(cur));
-		cur=s.top();
-		s.pop();
 	}
 	return maxD;
 }
@@ -120,12 +175,24 @@ void recurPrint(BinarySearchTree::Node* cur) {
 }
 
 void BinarySearchTree::print() const{
-	if (root_){
-		recurPrint(root_);
-	}else{
-		cout<<"Empty tree";
-	}
-	cout<<endl;
+//	if (root_){
+//		Node* cur=root_;
+//		stack<Node *> s;
+//		
+//		while (!s.empty() || cur){
+//			if (cur){
+//				s.push(cur);
+//				cur=cur->left;
+//			}else{
+//				cout<<s.top()->val<<", ";
+//				cur=(s.top()->right);
+//				s.pop();
+//			}
+//		}
+//	}else{
+//		cout<<"Empty tree";
+//	}
+//	cout<<endl;
 }
 // Returns true if a node with the value val exists in the tree; otherwise, 
 // it returns false.
@@ -170,7 +237,7 @@ bool BinarySearchTree::insert(DataType val){
 		return true;
 	}
 	Node* cur = root_;
-	while (true){
+	while (cur->left || cur->right){
 		if (cur->left && cur->val>val){
 			//left
 			cur=cur->left;
@@ -181,16 +248,8 @@ bool BinarySearchTree::insert(DataType val){
 			break;
 		}
 	}
-	if (cur->val>val){
-		
-		//left
-		cur->left=newNode;
-		size_++;
-		print();
-		return true;
-	}
-	//right
-	cur->right=newNode;
+	
+	cur->val>val?cur->left=newNode:cur->right=newNode;
 	size_++;
 	print();
 	return true;
@@ -198,128 +257,102 @@ bool BinarySearchTree::insert(DataType val){
 // Removes the node with the value val from the tree. Returns true if successful, 
 // and false otherwise.
 bool BinarySearchTree::remove(DataType val){
-	if (size_==0){
+	if (size_==0 || !exists(val)){
 		return false;
 	}
-	if (!exists(val)){
-		return false;
-	}
-	
 	Node* cur = root_;
-	Node* removeNode;
-	if (root_->val==val){
-		//root is val
-		if (size_==1){
-			size_--;
-			delete root_;
-			root_=NULL;
-			return true;
-		} else if (!cur->left){
-			// no left, must have a right, since size>1
-			root_=cur->right;
-			delete cur;
-			cur=NULL;
-		}else if (!(cur->left)->right){
-			//if root->left doesnt have a right
-			cur->left->right=cur->right;
-			root_=cur->left;
-			delete cur;
-			cur=NULL;
-		} else {
-			//find parent of max left
-			cur=cur->left;
-			while(cur->right->right){
-				cur=cur->right;
-			}
-			Node* deleteNode=cur->right;
-			root_->val=cur->right->val;
-			if (cur->right->left){
-				removeNode = cur->right;
-				cur->right=removeNode->left;
-				delete removeNode;
-				removeNode=NULL;
-			}else {
-				delete cur->right;
-				cur->right=NULL;
-			}
-		}
+	if (size_==1){
 		size_--;
+		delete cur;
+		cur=NULL;
 		return true;
 	}
+
+
 	
-	//find val
-	Node* pVal=root_;//parent of val
-	//removeNode is node to be removed
-	
-	val>root_->val?removeNode=root_->right:removeNode=root_->left;
-	
-	
-	while (removeNode->val!=val){
-		if(val>removeNode->val){
-			pVal=removeNode;
-			removeNode=removeNode->right;
-		}else{
-			pVal=removeNode;
-			removeNode=removeNode->left;
+	if (root_->val!=val){
+		while(cur->val!=val){
+			cur->val>val? cur=cur->left: cur=cur->right;
 		}
 	}
 	
-	bool childLeft = pVal->val>val;
+	//cur is val
+	//removeNode is node to be removed
+	//pVal is parent of removeNode
+
+	Node* removeNode=maxLeft(cur);
+	Node* pVal=pMaxLeft(cur,root_);//parent of removeNode
+	bool childLeft = (removeNode->val < pVal->val);
+	cur->val=removeNode->val;
+	
 	if (childLeft){
-		if (!removeNode->left && !removeNode->right){ // no left and no right
-			pVal->left=NULL;
-		}else if (!removeNode->left){ // only right
-			pVal->left=removeNode->right;
-		}else if (!removeNode->right){ // only left
-			pVal->left=removeNode->left;
-		}else{ // both left and right
-			//find parent of max of left subtree
-			//THIS IS THE PART THAT DOESNT WORK
-			//if removeNode->left is a leaf this doesnt work
-			//presumably also the case for !childLeft
-			
-			if (removeNode->left->right){
-				pVal=removeNode->left;
-			}else{
-				pVal=removeNode;
-			}
-			
-			while(pVal->right->right){
-				pVal=pVal->right;
-			}
-			
-			removeNode->val=pVal->right->val;
-			removeNode=pVal->right;
-			if (removeNode->left){
-				pVal->right=removeNode->left;
-			}
-		}
-	}else {
-		if (!removeNode->left && !removeNode->right){ // no left and no right
-			pVal->right=NULL;
-		}else if (!removeNode->left){ // only right
-			pVal->right=removeNode->right;	
-		}else if (!removeNode->right){ // only left
-			pVal->right=removeNode->left;
-		}else{
-			//find parent of max of left subtree
-			pVal=removeNode->left;
-			while(pVal->right->right){
-				pVal=pVal->right;
-			}
-			// cur is parent of max left
-			
-			removeNode->val=pVal->right->val;
-			removeNode=pVal->right;
-			if (removeNode->left){
-				pVal->right=removeNode->left;
-			}
-		}
+		pVal->left=NULL;
+	}else{
+		pVal->right=NULL;
 	}
 	delete removeNode;
 	removeNode=NULL;
 	size_--;
 	return true;
+	
+//	//find val
+//	//removeNode is node to be removed
+	
+//	val>root_->val?removeNode=root_->right:removeNode=root_->left;
+//	
+//	
+//	while (removeNode->val!=val){
+//		if(val>removeNode->val){
+//			pVal=removeNode;
+//			removeNode=removeNode->right;
+//		}else{
+//			pVal=removeNode;
+//			removeNode=removeNode->left;
+//		}
+//	}
+//	
+//	bool childLeft = pVal->val>val;
+//	if (childLeft){
+//		if (!removeNode->left && !removeNode->right){ // no left and no right
+//			pVal->left=NULL;
+//		}else if (!removeNode->left){ // only right
+//			pVal->left=removeNode->right;
+//		}else if (!removeNode->right){ // only left
+//			pVal->left=removeNode->left;
+//		}else{ // both left and right
+//			//find parent of max of left subtree
+//			// right now, removeNode is val, pVal is root of val
+//			
+//			removeNode->val=maxLeft(removeNode)->val;
+//			pVal=pMaxLeft(removeNode);
+//			removeNode=maxLeft(removeNode);
+//			
+//			// removeNode is always right child of pVal
+//			
+//			pVal->left=NULL;
+//		}
+//	}else {
+//		if (!removeNode->left && !removeNode->right){ // no left and no right
+//			pVal->right=NULL;
+//		}else if (!removeNode->left){ // only right
+//			pVal->right=removeNode->right;	
+//		}else if (!removeNode->right){ // only left
+//			pVal->right=removeNode->left;
+//		}else{
+//			//find parent of max of left subtree
+//			
+//			removeNode->val=maxLeft(removeNode)->val;
+//			pVal=pMaxLeft(removeNode);
+//			removeNode=maxLeft(removeNode);
+//			// cur is parent of max left
+//			
+//			pVal->right=NULL;
+//		}
+//	}
+//	delete removeNode;
+//	removeNode=NULL;
+//	size_--;
+//	return true;
 	//if has left and right	
 	
 }
