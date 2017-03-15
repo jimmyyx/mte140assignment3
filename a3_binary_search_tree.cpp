@@ -257,28 +257,24 @@ bool BinarySearchTree::insert(DataType val){
 // Removes the node with the value val from the tree. Returns true if successful, 
 // and false otherwise.
 bool BinarySearchTree::remove(DataType val){
+	//implement recursive or while loop to remove nodes that have children
 	if (size_==0 || !exists(val)){
 		return false;
 	}
 	Node* cur = root_;
 	if (size_==1){
 		size_--;
-		delete cur;
-		cur=NULL;
+		delete root_;
+		root_=NULL;
 		return true;
 	}
-
-
 	
 	if (root_->val!=val){
 		while(cur->val!=val){
 			cur->val>val? cur=cur->left: cur=cur->right;
 		}
 	}
-	
-	//cur is val
-	//removeNode is node to be removed
-	//pVal is parent of removeNode
+
 
 	Node* removeNode=maxLeft(cur);
 	Node* pVal=pMaxLeft(cur,root_);//parent of removeNode
@@ -295,65 +291,7 @@ bool BinarySearchTree::remove(DataType val){
 	size_--;
 	return true;
 	
-//	//find val
-//	//removeNode is node to be removed
-	
-//	val>root_->val?removeNode=root_->right:removeNode=root_->left;
-//	
-//	
-//	while (removeNode->val!=val){
-//		if(val>removeNode->val){
-//			pVal=removeNode;
-//			removeNode=removeNode->right;
-//		}else{
-//			pVal=removeNode;
-//			removeNode=removeNode->left;
-//		}
-//	}
-//	
-//	bool childLeft = pVal->val>val;
-//	if (childLeft){
-//		if (!removeNode->left && !removeNode->right){ // no left and no right
-//			pVal->left=NULL;
-//		}else if (!removeNode->left){ // only right
-//			pVal->left=removeNode->right;
-//		}else if (!removeNode->right){ // only left
-//			pVal->left=removeNode->left;
-//		}else{ // both left and right
-//			//find parent of max of left subtree
-//			// right now, removeNode is val, pVal is root of val
-//			
-//			removeNode->val=maxLeft(removeNode)->val;
-//			pVal=pMaxLeft(removeNode);
-//			removeNode=maxLeft(removeNode);
-//			
-//			// removeNode is always right child of pVal
-//			
-//			pVal->left=NULL;
-//		}
-//	}else {
-//		if (!removeNode->left && !removeNode->right){ // no left and no right
-//			pVal->right=NULL;
-//		}else if (!removeNode->left){ // only right
-//			pVal->right=removeNode->right;	
-//		}else if (!removeNode->right){ // only left
-//			pVal->right=removeNode->left;
-//		}else{
-//			//find parent of max of left subtree
-//			
-//			removeNode->val=maxLeft(removeNode)->val;
-//			pVal=pMaxLeft(removeNode);
-//			removeNode=maxLeft(removeNode);
-//			// cur is parent of max left
-//			
-//			pVal->right=NULL;
-//		}
-//	}
-//	delete removeNode;
-//	removeNode=NULL;
-//	size_--;
-//	return true;
-	//if has left and right	
+
 	
 }
 // Update the avlBalance starting at node n
