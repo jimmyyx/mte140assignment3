@@ -20,22 +20,6 @@ BinarySearchTree::BinarySearchTree(){
 // Destructor of the class BinarySearchTree. It deallocates the memory 
 // space allocated for the binary search tree. 
 
-void deleteTree (BinarySearchTree::Node* cur){
-	//pre, have not checked either
-	if (cur->left){
-		deleteTree (cur->left);
-		cur->left=NULL;
-	}
-	//in, checked every left child
-	if (cur->right){
-		deleteTree (cur->right);
-		cur->right=NULL;
-	}
-	//post, checked every left and right child
-	delete cur;
-	cur=NULL;
-}
-
 BinarySearchTree::~BinarySearchTree(){
 //	if (root_){
 //		deleteTree(root_);	
@@ -161,38 +145,26 @@ unsigned int BinarySearchTree::depth() const{
 // You can print the tree in whatever order you prefer. However, methods such 
 // as in-order or level-order traversal could be the most useful for debugging.
 
-void recurPrint(BinarySearchTree::Node* cur) {
-	//pre, have not checked either
-	if (cur->left){
-		recurPrint (cur->left);
-	}
-	//in, checked every left child
-	cout<<cur->val<<", ";
-	if (cur->right){
-		recurPrint (cur->right);
-	}
-	//post, checked every left and right child
-}
 
 void BinarySearchTree::print() const{
-//	if (root_){
-//		Node* cur=root_;
-//		stack<Node *> s;
-//		
-//		while (!s.empty() || cur){
-//			if (cur){
-//				s.push(cur);
-//				cur=cur->left;
-//			}else{
-//				cout<<s.top()->val<<", ";
-//				cur=(s.top()->right);
-//				s.pop();
-//			}
-//		}
-//	}else{
-//		cout<<"Empty tree";
-//	}
-//	cout<<endl;
+	if (root_){
+		Node* cur=root_;
+		stack<Node *> s;
+		
+		while (!s.empty() || cur){
+			if (cur){
+				s.push(cur);
+				cur=cur->left;
+			}else{
+				cout<<s.top()->val<<", ";
+				cur=(s.top()->right);
+				s.pop();
+			}
+		}
+	}else{
+		cout<<"Empty tree";
+	}
+	cout<<endl;
 }
 // Returns true if a node with the value val exists in the tree; otherwise, 
 // it returns false.
@@ -232,26 +204,14 @@ bool BinarySearchTree::insert(DataType val){
 	Node* newNode=new Node(val);
 	if (!root_){
 		root_=newNode;
-		size_++;
-		print();
-		return true;
-	}
-	Node* cur = root_;
-	while (cur->left || cur->right){
-		if (cur->left && cur->val>val){
-			//left
-			cur=cur->left;
-		}else if (cur->right && cur->val<val){
-			//right
-			cur=cur->right;
-		}else{
-			break;
+	}else {
+		Node* cur = root_;
+		while (cur->left && cur->val>val || cur->right && cur->val<val){
+			cur->left && cur->val>val ? cur=cur->left : cur=cur->right;
 		}
+		cur->val>val?cur->left=newNode:cur->right=newNode;
 	}
-	
-	cur->val>val?cur->left=newNode:cur->right=newNode;
 	size_++;
-	print();
 	return true;
 }
 // Removes the node with the value val from the tree. Returns true if successful, 
@@ -264,7 +224,7 @@ bool BinarySearchTree::remove(DataType val){
 	Node* cur = root_;
 	if (size_==1){
 		size_--;
-		delete root_;
+		delete cur;
 		root_=NULL;
 		return true;
 	}
@@ -275,27 +235,33 @@ bool BinarySearchTree::remove(DataType val){
 		}
 	}
 
-
 	Node* removeNode=maxLeft(cur);
 	Node* pVal=pMaxLeft(cur,root_);//parent of removeNode
 	bool childLeft = (removeNode->val < pVal->val);
+	DataType temp = cur->val;
 	cur->val=removeNode->val;
+	removeNode->val=temp;
 	
-	if (childLeft){
-		pVal->left=NULL;
-	}else{
-		pVal->right=NULL;
+	while (removeNode->left || removeNode->right){
+		cur=removeNode;
+		removeNode=maxLeft(cur);
+		pVal=pMaxLeft(cur, root_);
+		bool childLeft = (removeNode->val < pVal->val);
+		DataType temp = cur->val;
+		cur->val=removeNode->val;
+		removeNode->val=temp;
 	}
+	childLeft ? pVal->left=NULL : pVal->right=NULL;
+	
 	delete removeNode;
 	removeNode=NULL;
 	size_--;
 	return true;
-	
-
-	
 }
+
 // Update the avlBalance starting at node n
 void BinarySearchTree::updateNodeBalance(Node* n){
+	
 }
 
 
